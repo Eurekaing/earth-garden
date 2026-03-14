@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>如果地球是一座花园</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      overflow: hidden;
+      color: white;
+    }
+    
+    #globe-container {
+      width: 100vw;
+      height: 100vh;
+    }
+    
+    /* 顶部标题栏 */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 20px 30px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 100%);
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #a8edea 0%, #fed6e3 50%, #d299c2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 2px;
+    }
+    
+    .header .subtitle {
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+      margin-top: 4px;
+    }
+    
+    /* 左侧筛选面板 */
+    .ui-panel {
+      position: fixed;
+      top: 100px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 24px;
+      color: white;
+      min-width: 280px;
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+      z-index: 100;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    
+    .ui-panel::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    .ui-panel::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+    }
+    
+    .filter-section {
+      margin-bottom: 20px;
+    }
+    
+    .filter-section:last-child {
+      margin-bottom: 0;
+    }
+    
+    .filter-section label {
+      display: block;
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 500;
+    }
+    
+    .filter-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .filter-btn {
+      padding: 8px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      color: rgba(255,255,255,0.8);
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+    
+    .filter-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+    
+    .filter-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* 右侧植物卡片 */
+    .plant-card {
+      position: fixed;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%) translateX(400px);
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(30px);
+      border-radius: 24px;
+      padding: 0;
+      color: white;
+      width: 360px;
+      z-index: 100;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+    }
+    
+    .plant-card.show {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+    
+    .plant-card .image-container {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      overflow: hidden;
+    }
+    
+    .plant-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+    
+    .plant-card:hover img {
+      transform: scale(1.05);
+    }
+    
+    .plant-card .image-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.6));
+    }
+    
+    .plant-card .card-content {
+      padding: 24px;
+    }
+    
+    .plant-card h2 {
+      font-size: 26px;
+      margin-bottom: 6px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    
+    .plant-card .latin {
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      font-style: italic;
+      margin-bottom: 16px;
+      font-family: Georgia, serif;
+    }
+    
+    .plant-card .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .plant-card .info-item {
+      background: rgba(255,255,255,0.05);
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .plant-card .info-item .label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    
+    .plant-card .info-item .value {
+      font-size: 13px;
+      color: rgba(255,255,255,0.9);
+      font-weight: 500;
+    }
+    
+    .plant-card .weather-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    
+    .plant-card .weather-icon {
+      font-size: 24px;
+    }
+    
+    .plant-card .weather-text {
+      font-size: 14px;
+      color: rgba(255,255,255,0.9);
+    }
+    
+    .plant-card .loading-weather {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+    }
+    
+    .plant-card .weather-error {
+      font-size: 13px;
+      color: rgba(255,100,100,0.8);
+    }
+    
+    .plant-card .description {
+      font-size: 14px;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.75);
+    }
+    
+    .close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+    }
+    
+    .close-btn:hover {
+      background: rgba(0, 0, 0, 0.5);
+      transform: rotate(90deg);
+    }
+    
+    /* 底部统计 */
+    .stats-container {
+      position: fixed;
+      bottom: 30px;
+      left: 20px;
+      display: flex;
+      gap: 16px;
+      z-index: 100;
+    }
+    
+    .stat-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 16px 24px;
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stat-card .number {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .stat-card .label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    /* 加载动画 */
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 16px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #a8edea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* 图例 */
+    .legend {
+      position: fixed;
+      bottom: 30px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 16px 20px;
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 100;
+    }
+    
+    .legend-title {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+    }
+    
+    .legend-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    
+    .legend-dot.flower { background: #ff6b9d; }
+    .legend-dot.tree { background: #4ecdc4; }
+    .legend-dot.shrub { background: #ffe66d; }
+    .legend-dot.herb { background: #95e1d3; }
+    
+    /* 提示文字 */
+    .hint {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(10px);
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+      z-index: 100;
+      pointer-events: none;
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/index-mZiABZOW.js"></script>
+</head>
+<body>
+  <div id="globe-container"></div>
+  
+  <!-- 顶部标题 -->
+  <div class="header">
+    <div>
+      <h1>🌍 如果地球是一座花园</h1>
+      <div class="subtitle">探索全球 70+ 种代表性植物</div>
+    </div>
+  </div>
+  
+  <!-- 左侧筛选面板 -->
+  <div class="ui-panel">
+    <div class="filter-section">
+      <label>大洲</label>
+      <div class="filter-buttons" id="continent-filters">
+        <button class="filter-btn active" data-filter="all">全部</button>
+        <button class="filter-btn" data-filter="asia">亚洲</button>
+        <button class="filter-btn" data-filter="europe">欧洲</button>
+        <button class="filter-btn" data-filter="africa">非洲</button>
+        <button class="filter-btn" data-filter="north-america">北美洲</button>
+        <button class="filter-btn" data-filter="south-america">南美洲</button>
+        <button class="filter-btn" data-filter="oceania">大洋洲</button>
+      </div>
+    </div>
+    
+    <div class="filter-section">
+      <label>植被类型</label>
+      <div class="filter-buttons" id="type-filters">
+        <button class="filter-btn active" data-filter="all">全部</button>
+        <button class="filter-btn" data-filter="flower">花卉</button>
+        <button class="filter-btn" data-filter="tree">乔木</button>
+        <button class="filter-btn" data-filter="shrub">灌木</button>
+        <button class="filter-btn" data-filter="herb">草本</button>
+      </div>
+    </div>
+    
+    <div class="filter-section">
+      <label>气候类型</label>
+      <div class="filter-buttons" id="climate-filters">
+        <button class="filter-btn active" data-filter="all">全部</button>
+        <button class="filter-btn" data-filter="tropical">热带</button>
+        <button class="filter-btn" data-filter="temperate">温带</button>
+        <button class="filter-btn" data-filter="cold">寒带</button>
+        <button class="filter-btn" data-filter="wetland">湿地</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 右侧植物卡片 -->
+  <div class="plant-card" id="plant-card">
+    <button class="close-btn">×</button>
+    <div class="image-container">
+      <img id="plant-image" src="" alt="">
+      <div class="image-overlay"></div>
+    </div>
+    <div class="card-content">
+      <div class="weather-info" id="weather-info">
+        <span class="loading-weather">🌤️ 获取天气中...</span>
+      </div>
+      <h2 id="plant-name"></h2>
+      <div class="latin" id="plant-latin"></div>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="label">📍 分布地区</div>
+          <div class="value" id="plant-region"></div>
+        </div>
+        <div class="info-item">
+          <div class="label">🌡️ 气候</div>
+          <div class="value" id="plant-climate"></div>
+        </div>
+        <div class="info-item">
+          <div class="label">🏔️ 海拔</div>
+          <div class="value" id="plant-altitude"></div>
+        </div>
+        <div class="info-item">
+          <div class="label">🌿 类型</div>
+          <div class="value" id="plant-type"></div>
+        </div>
+      </div>
+      <div class="description" id="plant-description"></div>
+    </div>
+  </div>
+  
+  <!-- 底部统计 -->
+  <div class="stats-container">
+    <div class="stat-card">
+      <div class="number" id="plant-count">70+</div>
+      <div class="label">植物种类</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">7</div>
+      <div class="label">大洲覆盖</div>
+    </div>
+  </div>
+  
+  <!-- 图例 -->
+  <div class="legend">
+    <div class="legend-title">植被类型</div>
+    <div class="legend-item">
+      <div class="legend-dot flower"></div>
+      <span>花卉</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot tree"></div>
+      <span>乔木</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot shrub"></div>
+      <span>灌木</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot herb"></div>
+      <span>草本</span>
+    </div>
+  </div>
+  
+  <!-- 提示 -->
+  <div class="hint">🖱️ 点击地球上的光点查看植物详情</div>
+  
+  <!-- 加载 -->
+  <div class="loading" id="loading">
+    <div class="loading-spinner"></div>
+    <span>正在加载地球...</span>
+  </div>
+
+</body>
+</html>
